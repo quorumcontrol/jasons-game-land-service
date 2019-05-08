@@ -3,20 +3,41 @@ package cmd
 import (
 	"bufio"
 	"context"
-	"crypto/rand"
-	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 
-	"github.com/libp2p/go-libp2p"
-	crypto "github.com/libp2p/go-libp2p-crypto"
-	net "github.com/libp2p/go-libp2p-net"
-	"github.com/multiformats/go-multiaddr"
+	"github.com/AsynkronIT/protoactor-go/actor"
+	"github.com/ethereum/go-ethereum/crypto"
+	srv "github.com/quorumcontrol/jasons-game-land-service/service"
+	"github.com/quorumcontrol/tupelo-go-sdk/gossip3/remote"
+	"github.com/quorumcontrol/tupelo-go-sdk/p2p"
 	"github.com/spf13/cobra"
 )
 
 var servicePort uint
+
+func stopOnSignal(actors ...*actor.PID) {
+	sigs := make(chan os.Signal, 1)
+	done := make(chan bool, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		sig := <-sigs
+		fmt.Printf("Caught signal %d\n", sig)
+		for _, act := range actors {
+			fmt.Printf("Gracefully stopping actor\n")
+			err := actor.EmptyRootContext.PoisonFuture(act).Wait()
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Actor failed to stop gracefully: %s\n", err)
+			}
+		}
+		done <- true
+	}()
+	<-done
+}
 
 func readData(rw *bufio.ReadWriter) {
 	str, _ := rw.ReadString('\n')
@@ -29,11 +50,62 @@ func readData(rw *bufio.ReadWriter) {
 	fmt.Printf("\x1b[32m%s\x1b[0m", str)
 }
 
-func handleStream(s net.Stream) {
-	// Create a buffer stream for non blocking read and write.
-	rw := bufio.NewReadWriter(bufio.NewReader(s), bufio.NewWriter(s))
+func setupServiceRemote(ctx context.Context, nodeIdx int) (*actor.PID, error) {
+	fmt.Printf("Setting up remote subsystem\n")
+	remote.Start()
 
-	go readData(rw)
+	conf, err := readConf()
+	if err != nil {
+		return nil, err
+	}
+	ecdsaKeyB, err := hex.DecodeString(conf.Services[nodeIdx].EcdsaHexPrivateKey)
+	if err != nil {
+		return nil, err
+	}
+	ecdsaKey, err := crypto.ToECDSA(ecdsaKeyB)
+	if err != nil {
+		return nil, err
+	}
+	peerId := crypto.PubkeyToAddress(ecdsaKey.PublicKey).String()
+
+	p2pHost, err := p2p.NewLibP2PHost(ctx, ecdsaKey, int(servicePort))
+	if err != nil {
+		return nil, err
+	}
+	bootstrapperAddrsRaw := strings.Split(os.Getenv("LAND_SERVICE_BOOTSTRAPPERS"), ",")
+	bootstrapperAddrs := []string{}
+	for _, addr := range bootstrapperAddrsRaw {
+		addr = strings.TrimSpace(addr)
+		if addr != "" {
+			bootstrapperAddrs = append(bootstrapperAddrs, addr)
+		}
+	}
+	if len(bootstrapperAddrs) == 0 {
+		return nil, fmt.Errorf("please define $LAND_SERVICE_BOOTSTRAPPERS")
+	}
+	fmt.Printf("Bootstrapping...\n")
+	if _, err = p2pHost.Bootstrap(bootstrapperAddrs); err != nil {
+		return nil, err
+	}
+
+	remote.NewRouter(p2pHost)
+
+	cfg := srv.ServiceConfig{
+		// Self:              localSigner,
+		// NotaryGroup:       group,
+		// CurrentStateStore: badgerCurrent,
+		// PubSubSystem:      remote.NewNetworkPubSub(p2pHost),
+	}
+	name := "service-" + peerId
+	props := actor.PropsFromProducer(func() actor.Actor {
+		return srv.NewServiceActor(cfg)
+	})
+	act, err := actor.EmptyRootContext.SpawnNamed(props, name)
+	if err != nil {
+		return nil, err
+	}
+
+	return act, nil
 }
 
 var cmdService = &cobra.Command{
@@ -43,56 +115,17 @@ var cmdService = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := context.Background()
 
-		var privKey crypto.PrivKey
-		privKeyStr := os.Getenv("LAND_SERVICE_PRIVATE_KEY")
-		privKeyStr = strings.TrimSpace(privKeyStr)
-		if privKeyStr != "" {
-			privKeyB, err := base64.StdEncoding.DecodeString(privKeyStr)
-			if err != nil {
-				return err
-			}
-			privKey, err = crypto.UnmarshalPrivateKey(privKeyB)
-			if err != nil {
-				return err
-			}
-		} else {
-			r := rand.Reader
-			var err error
-			privKey, _, err = crypto.GenerateKeyPairWithReader(crypto.RSA, 2048, r)
-			if err != nil {
-				return err
-			}
-		}
-
-		sourceMultiAddr, _ := multiaddr.NewMultiaddr(fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", servicePort))
-		host, err := libp2p.New(ctx, libp2p.ListenAddrs(sourceMultiAddr),
-			libp2p.Identity(privKey))
+		// TODO: Detect node identity
+		nodeIdx := 0
+		fmt.Printf("Service #%d starting\n", nodeIdx+1)
+		act, err := setupServiceRemote(ctx, nodeIdx)
 		if err != nil {
 			return err
 		}
 
-		host.SetStreamHandler("/jasons-game-land-service/1.0.0", handleStream)
+		fmt.Printf("All set up!\n")
 
-		// Let's get the actual TCP port from our listen multiaddr, in case we're using 0 (default; random available port).
-		var port string
-		for _, la := range host.Network().ListenAddresses() {
-			if p, err := la.ValueForProtocol(multiaddr.P_TCP); err == nil {
-				port = p
-				break
-			}
-		}
-
-		if port == "" {
-			panic("was not able to find actual local port")
-		}
-
-		fmt.Printf("Run './jasons-game-land-service client /ip4/127.0.0.1/tcp/%v/p2p/%s <command>' in another console.\n", port, host.ID().Pretty())
-		fmt.Println("You can replace 127.0.0.1 with public IP as well.")
-		fmt.Printf("\nWaiting for incoming connection\n\n")
-
-		// Hang forever
-		<-make(chan struct{})
-
+		stopOnSignal(act)
 		return nil
 	},
 }

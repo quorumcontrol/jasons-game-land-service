@@ -8,13 +8,17 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "land-service",
-	Short: "Jason's Game land service",
-	Long:  `Jason's Game land service`,
+	Use:          "land-service",
+	Short:        "Jason's Game land service",
+	Long:         `Jason's Game land service`,
+	SilenceUsage: true,
 }
+var configFilePath string
 
 func Execute() {
-	rootCmd.AddCommand(cmdService, cmdClient, cmdGenerateKey)
+	rootCmd.Flags().StringVarP(&configFilePath, "config", "c", "conf.json",
+		"Configuration file")
+	rootCmd.AddCommand(cmdService, cmdClient, cmdGenerateKey, cmdBootstrapper)
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)

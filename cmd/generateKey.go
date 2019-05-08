@@ -1,12 +1,10 @@
 package cmd
 
 import (
-	"crypto/rand"
-	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 
-	crypto "github.com/libp2p/go-libp2p-crypto"
-	peer "github.com/libp2p/go-libp2p-peer"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/spf13/cobra"
 )
 
@@ -15,22 +13,15 @@ var cmdGenerateKey = &cobra.Command{
 	Short: "Generate key",
 	Long:  `Generate peer key.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		privKey, _, err := crypto.GenerateKeyPairWithReader(crypto.RSA, 2048, rand.Reader)
+		ecdsaKey, err := crypto.GenerateKey()
 		if err != nil {
 			return err
 		}
 
-		bytes, err := crypto.MarshalPrivateKey(privKey)
-		if err != nil {
-			return err
-		}
-		privKeyStr := base64.StdEncoding.EncodeToString(bytes)
+		privKeyStr := hex.EncodeToString(crypto.FromECDSA(ecdsaKey))
+		pubKeyStr := hex.EncodeToString(crypto.FromECDSAPub(&ecdsaKey.PublicKey))
 
-		id, err := peer.IDFromPrivateKey(privKey)
-		if err != nil {
-			return err
-		}
-		fmt.Printf("Private key: %s\nPeer ID: %s\n", privKeyStr, id.Pretty())
+		fmt.Printf("Private key: %s\nPublic key: %s\n\n", privKeyStr, pubKeyStr)
 
 		return nil
 	},
