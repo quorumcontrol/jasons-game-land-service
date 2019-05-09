@@ -115,6 +115,8 @@ github.com/envoyproxy/go-control-plane v0.6.9/go.mod h1:SBwIajubJHhxtWwsL9s8ss4s
 github.com/envoyproxy/go-control-plane v0.7.0/go.mod h1:SBwIajubJHhxtWwsL9s8ss4safvEdbitLhGGK48rN6g=
 github.com/ethereum/go-ethereum v1.8.25 h1:j0/n1AsED2qmTOL95ZY50UmY2CexRrmCiOV0mSaPIGk=
 github.com/ethereum/go-ethereum v1.8.25/go.mod h1:PwpWDrCLZrV+tfrhqqF6kPknbISMHaJv9Ln3kPCZLwY=
+github.com/ethereum/go-ethereum v1.8.27 h1:d+gkiLaBDk5fn3Pe/xNVaMrB/ozI+AUB2IlVBp29IrY=
+github.com/ethereum/go-ethereum v1.8.27/go.mod h1:PwpWDrCLZrV+tfrhqqF6kPknbISMHaJv9Ln3kPCZLwY=
 github.com/facebookgo/atomicfile v0.0.0-20151019160806-2de1f203e7d5 h1:BBso6MBKW8ncyZLv37o+KNyy0HrrHgfnOaGQC2qvN+A=
 github.com/facebookgo/atomicfile v0.0.0-20151019160806-2de1f203e7d5/go.mod h1:JpoxHjuQauoxiFMl1ie8Xc/7TfLuMZ5eOCONd1sUBHg=
 github.com/fatih/color v1.6.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=
@@ -679,6 +681,8 @@ github.com/quorumcontrol/tupelo-go-sdk v0.2.1-0.20190503150547-49d54068a17c h1:U
 github.com/quorumcontrol/tupelo-go-sdk v0.2.1-0.20190503150547-49d54068a17c/go.mod h1:a8CvD4PYyS7QyXTdy1tsPyomrPeuqmKSRBtmbRAeLG8=
 github.com/quorumcontrol/tupelo-go-sdk v0.2.1-0.20190508100815-d0eeb09f0802 h1:tvuOcapuTuHlS9P01+FXfpDbDyDtlvLKXZuWZRPMK0Y=
 github.com/quorumcontrol/tupelo-go-sdk v0.2.1-0.20190508100815-d0eeb09f0802/go.mod h1:a8CvD4PYyS7QyXTdy1tsPyomrPeuqmKSRBtmbRAeLG8=
+github.com/quorumcontrol/tupelo-go-sdk v0.2.2 h1:0REQGk6PPyZbdptgrYj8zAqf1c//XyjeJa59miQAvIg=
+github.com/quorumcontrol/tupelo-go-sdk v0.2.2/go.mod h1:a8CvD4PYyS7QyXTdy1tsPyomrPeuqmKSRBtmbRAeLG8=
 github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
 github.com/rogpeppe/go-internal v1.1.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
 github.com/rogpeppe/go-internal v1.2.2/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=

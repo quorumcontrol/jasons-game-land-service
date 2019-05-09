@@ -13,7 +13,7 @@ require (
 	github.com/multiformats/go-multiaddr v0.0.2
 	github.com/pkg/errors v0.8.1
 	github.com/prometheus/common v0.3.0
-	github.com/quorumcontrol/tupelo-go-sdk v0.2.1-0.20190508100815-d0eeb09f0802
+	github.com/quorumcontrol/tupelo-go-sdk v0.2.1-0.20190503150547-49d54068a17c
 	github.com/spf13/cobra v0.0.3
 	github.com/tinylib/msgp v1.1.0
 )
