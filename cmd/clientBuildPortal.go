@@ -67,7 +67,6 @@ func setupServices(ctx context.Context, localKey *ecdsa.PrivateKey) ([]*service,
 		}
 		actorAddr := fmt.Sprintf("%s-%s", fromID.Pretty(), toId.Pretty())
 		act := actor.NewPID(actorAddr, fmt.Sprintf("service-%s", toAddr))
-		fmt.Printf("Creating service actor with ID %q and address %q\n", act.Id, act.Address)
 		services = append(services, &service{
 			publicKey: ecdsaPubKey,
 			actor:     act,
@@ -97,13 +96,14 @@ var cmdBuildPortal = &cobra.Command{
 			return err
 		}
 
+		fmt.Printf("* Sending request to build portal...\n")
 		fut := actor.EmptyRootContext.RequestFuture(services[0].actor, &messages.BuildPortal{},
 			1*time.Second)
 		if err = fut.Wait(); err != nil {
 			return errors.Wrapf(err, "request to build portal failed")
 		}
 
-		fmt.Printf("Successfully requested building of portal\n")
+		fmt.Printf("* Successfully sent request to build portal!\n")
 		return nil
 	},
 }

@@ -21,14 +21,12 @@ func Bootstrap(p2pHost *p2p.LibP2PHost) error {
 	if len(bootstrapperAddrs) == 0 {
 		return fmt.Errorf("please define $LAND_SERVICE_BOOTSTRAPPERS")
 	}
-	fmt.Printf("Bootstrapping...\n")
 	if _, err := p2pHost.Bootstrap(bootstrapperAddrs); err != nil {
 		return err
 	}
 	if err := p2pHost.WaitForBootstrap(1, 20*time.Second); err != nil {
 		return err
 	}
-	fmt.Printf("Finished bootstrapping\n")
 
 	return nil
 }

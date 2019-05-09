@@ -24,10 +24,8 @@ func stopOnSignal(actors ...*actor.PID) {
 	done := make(chan bool, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
-		sig := <-sigs
-		fmt.Printf("Caught signal %d\n", sig)
+		<-sigs
 		for _, act := range actors {
-			fmt.Printf("Gracefully stopping actor\n")
 			err := actor.EmptyRootContext.PoisonFuture(act).Wait()
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Actor failed to stop gracefully: %s\n", err)
@@ -39,7 +37,6 @@ func stopOnSignal(actors ...*actor.PID) {
 }
 
 func setupServiceRemote(ctx context.Context, nodeIdx int) (*actor.PID, error) {
-	fmt.Printf("Setting up remote subsystem\n")
 	remote.Start()
 
 	conf, err := readConf()
@@ -81,7 +78,6 @@ func setupServiceRemote(ctx context.Context, nodeIdx int) (*actor.PID, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("Started actor with ID %q and address %q\n", act.Id, act.Address)
 
 	return act, nil
 }
@@ -95,13 +91,10 @@ var cmdService = &cobra.Command{
 
 		// TODO: Detect node identity
 		nodeIdx := 0
-		fmt.Printf("Service #%d starting\n", nodeIdx+1)
 		act, err := setupServiceRemote(ctx, nodeIdx)
 		if err != nil {
 			return err
 		}
-
-		fmt.Printf("All set up!\n")
 
 		stopOnSignal(act)
 		return nil

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
-	"strings"
 
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/quorumcontrol/tupelo-go-sdk/p2p"
@@ -24,8 +23,6 @@ var cmdBootstrapper = &cobra.Command{
 		// TODO: Detect node identity
 		nodeIdx := 0
 
-		fmt.Printf("Bootstrapper #%d starting\n", nodeIdx+1)
-
 		ecdsaKeyB, err := hex.DecodeString(conf.Bootstrappers[nodeIdx].EcdsaHexPrivateKey)
 		if err != nil {
 			return err
@@ -40,11 +37,7 @@ var cmdBootstrapper = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		anAddr := host.Addresses()[0].String()
-		keySlice := strings.Split(anAddr, "/")
-		key := keySlice[len(keySlice)-1]
 
-		fmt.Printf("anAddr: %q, key: %q\n", anAddr, key)
 		otherBootstrappers := []string{}
 		// for i, addr := range p2p.BootstrapNodes() {
 		// 	if i == nodeIdx {
@@ -54,12 +47,9 @@ var cmdBootstrapper = &cobra.Command{
 		// 	otherBootstrappers = append(otherBootstrappers, addr)
 		// }
 		if len(otherBootstrappers) > 0 {
-			fmt.Printf("Bootstrapping self\n")
 			if _, err = host.Bootstrap(otherBootstrappers); err != nil {
 				return err
 			}
-		} else {
-			fmt.Printf("Not bootstrapping self\n")
 		}
 
 		fmt.Println("Bootstrap node running at:")
