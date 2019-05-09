@@ -36,7 +36,7 @@ func readConf() (configuration, error) {
 
 	jsonBytes, err := ioutil.ReadFile(configFilePath)
 	if err != nil {
-		return conf, err
+		return conf, fmt.Errorf("couldn't open %q, please ensure it exists", configFilePath)
 	}
 	if err := json.Unmarshal(jsonBytes, &conf); err != nil {
 		return conf, err

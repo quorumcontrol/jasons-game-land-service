@@ -21,7 +21,7 @@ var cmdGenerateKey = &cobra.Command{
 		privKeyStr := hex.EncodeToString(crypto.FromECDSA(ecdsaKey))
 		pubKeyStr := hex.EncodeToString(crypto.FromECDSAPub(&ecdsaKey.PublicKey))
 
-		fmt.Printf("Private key: %s\nPublic key: %s\n\n", privKeyStr, pubKeyStr)
+		fmt.Printf("Private key: %s\nPublic key: %s\n", privKeyStr, pubKeyStr)
 
 		return nil
 	},

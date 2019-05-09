@@ -1,0 +1,14 @@
+{
+  "bootstrappers": [
+    {
+      "ecdsaHexPrivateKey": "<private-key>",
+      "ecdsaHexPublicKey": "<public-key>"
+    }
+  ],
+  "services": [
+    {
+      "ecdsaHexPrivateKey": "<private-key>"",
+      "ecdsaHexPublicKey": "<public-key>"
+    }
+  ]
+}
