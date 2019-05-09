@@ -1,10 +1,14 @@
 FIRSTGOPATH = $(firstword $(subst :, ,$(GOPATH)))
 
 gosources = $(shell find . -path "./vendor/*" -prune -o -type f -name "*.go" -print)
+generated =messages/external_gen.go messages/external_gen_test.go
 
-all: jasons-game-land-service
+all: build
 
-jasons-game-land-service: $(gosources) go.mod go.sum
+$(generated): messages/external.go $(FIRSTGOPATH)/bin/msgp
+	cd messages && go generate
+
+build: $(gosources) $(generated) go.mod go.sum
 	go build
 
 lint: $(FIRSTGOPATH)/bin/golangci-lint
@@ -13,14 +17,17 @@ lint: $(FIRSTGOPATH)/bin/golangci-lint
 $(FIRSTGOPATH)/bin/golangci-lint:
 	./scripts/download-golangci-lint.sh
 
-test: $(gosources) go.mod go.sum
+$(FIRSTGOPATH)/bin/msgp:
+	go get github.com/tinylib/msgp
+
+test: $(gosources) $(generated) go.mod go.sum
 	go test ./... -tags=integration
 
-install: $(gosources) go.mod go.sum
+install: $(gosources) $(generated) go.mod go.sum
 	go install -a -gcflags=-trimpath=$(CURDIR) -asmflags=-trimpath=$(CURDIR)
 
 clean:
 	go clean
 	rm -rf vendor
 
-.PHONY: all test clean install lint
+.PHONY: all build test clean install lint

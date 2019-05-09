@@ -71,6 +71,7 @@ var cmdBootstrapper = &cobra.Command{
 }
 
 func init() {
+	rootCmd.AddCommand(cmdBootstrapper)
 	cmdBootstrapper.Flags().UintVarP(&bootstrapperPort, "port", "p", 0,
 		"What port to use (default random)")
 }

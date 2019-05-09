@@ -26,3 +26,7 @@ var cmdGenerateKey = &cobra.Command{
 		return nil
 	},
 }
+
+func init() {
+	rootCmd.AddCommand(cmdGenerateKey)
+}

@@ -1,3 +1,4 @@
 vendor/
 /jasons-game-land-service
 conf.json
+messages/*_gen*.go

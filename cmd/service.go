@@ -1,20 +1,19 @@
 package cmd
 
 import (
-	"bufio"
 	"context"
 	"encoding/hex"
 	"fmt"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 
 	"github.com/AsynkronIT/protoactor-go/actor"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/quorumcontrol/jasons-game-land-service/p2p"
 	srv "github.com/quorumcontrol/jasons-game-land-service/service"
 	"github.com/quorumcontrol/tupelo-go-sdk/gossip3/remote"
-	"github.com/quorumcontrol/tupelo-go-sdk/p2p"
+	sdkp2p "github.com/quorumcontrol/tupelo-go-sdk/p2p"
 	"github.com/spf13/cobra"
 )
 
@@ -39,17 +38,6 @@ func stopOnSignal(actors ...*actor.PID) {
 	<-done
 }
 
-func readData(rw *bufio.ReadWriter) {
-	str, _ := rw.ReadString('\n')
-	if str == "" || str == "\n" {
-		return
-	}
-
-	// Green console colour: 	\x1b[32m
-	// Reset console colour: 	\x1b[0m
-	fmt.Printf("\x1b[32m%s\x1b[0m", str)
-}
-
 func setupServiceRemote(ctx context.Context, nodeIdx int) (*actor.PID, error) {
 	fmt.Printf("Setting up remote subsystem\n")
 	remote.Start()
@@ -68,23 +56,12 @@ func setupServiceRemote(ctx context.Context, nodeIdx int) (*actor.PID, error) {
 	}
 	peerId := crypto.PubkeyToAddress(ecdsaKey.PublicKey).String()
 
-	p2pHost, err := p2p.NewLibP2PHost(ctx, ecdsaKey, int(servicePort))
+	p2pHost, err := sdkp2p.NewLibP2PHost(ctx, ecdsaKey, int(servicePort))
 	if err != nil {
 		return nil, err
 	}
-	bootstrapperAddrsRaw := strings.Split(os.Getenv("LAND_SERVICE_BOOTSTRAPPERS"), ",")
-	bootstrapperAddrs := []string{}
-	for _, addr := range bootstrapperAddrsRaw {
-		addr = strings.TrimSpace(addr)
-		if addr != "" {
-			bootstrapperAddrs = append(bootstrapperAddrs, addr)
-		}
-	}
-	if len(bootstrapperAddrs) == 0 {
-		return nil, fmt.Errorf("please define $LAND_SERVICE_BOOTSTRAPPERS")
-	}
-	fmt.Printf("Bootstrapping...\n")
-	if _, err = p2pHost.Bootstrap(bootstrapperAddrs); err != nil {
+
+	if err := p2p.Bootstrap(p2pHost); err != nil {
 		return nil, err
 	}
 
@@ -104,6 +81,7 @@ func setupServiceRemote(ctx context.Context, nodeIdx int) (*actor.PID, error) {
 	if err != nil {
 		return nil, err
 	}
+	fmt.Printf("Started actor with ID %q and address %q\n", act.Id, act.Address)
 
 	return act, nil
 }
@@ -131,5 +109,6 @@ var cmdService = &cobra.Command{
 }
 
 func init() {
+	rootCmd.AddCommand(cmdService)
 	cmdService.Flags().UintVarP(&servicePort, "port", "p", 0, "Source port")
 }
