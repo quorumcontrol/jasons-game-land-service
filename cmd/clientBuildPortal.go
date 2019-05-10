@@ -10,6 +10,7 @@ import (
 	"github.com/AsynkronIT/protoactor-go/actor"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/pkg/errors"
+	"github.com/quorumcontrol/jasons-game-land-service/config"
 	"github.com/quorumcontrol/jasons-game-land-service/messages"
 	"github.com/quorumcontrol/jasons-game-land-service/p2p"
 	"github.com/quorumcontrol/tupelo-go-sdk/gossip3/remote"
@@ -22,14 +23,14 @@ type service struct {
 	actor     *actor.PID
 }
 
-func setupClientRemote(ctx context.Context, localKey *ecdsa.PrivateKey) error {
+func setupClientRemote(ctx context.Context, localKey *ecdsa.PrivateKey, conf config.Configuration) error {
 	remote.Start()
 
 	p2pHost, err := sdkp2p.NewLibP2PHost(ctx, localKey, int(clientPort))
 	if err != nil {
 		return err
 	}
-	if err = p2p.Bootstrap(p2pHost); err != nil {
+	if err = p2p.Bootstrap(p2pHost, conf); err != nil {
 		return err
 	}
 
@@ -38,12 +39,7 @@ func setupClientRemote(ctx context.Context, localKey *ecdsa.PrivateKey) error {
 	return nil
 }
 
-func setupServices(ctx context.Context, localKey *ecdsa.PrivateKey) ([]*service, error) {
-	conf, err := readConf()
-	if err != nil {
-		return nil, err
-	}
-
+func setupServices(ctx context.Context, localKey *ecdsa.PrivateKey, conf config.Configuration) ([]*service, error) {
 	fromID, err := sdkp2p.PeerFromEcdsaKey(&localKey.PublicKey)
 	if err != nil {
 		return nil, err
@@ -87,12 +83,17 @@ var cmdBuildPortal = &cobra.Command{
 			return err
 		}
 
-		services, err := setupServices(ctx, localKey)
+		conf, err := config.ReadConf(configFilePath)
 		if err != nil {
 			return err
 		}
 
-		if err := setupClientRemote(ctx, localKey); err != nil {
+		services, err := setupServices(ctx, localKey, conf)
+		if err != nil {
+			return err
+		}
+
+		if err := setupClientRemote(ctx, localKey, conf); err != nil {
 			return err
 		}
 

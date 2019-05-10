@@ -10,6 +10,7 @@ import (
 
 	"github.com/AsynkronIT/protoactor-go/actor"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/quorumcontrol/jasons-game-land-service/config"
 	"github.com/quorumcontrol/jasons-game-land-service/p2p"
 	srv "github.com/quorumcontrol/jasons-game-land-service/service"
 	"github.com/quorumcontrol/tupelo-go-sdk/gossip3/remote"
@@ -39,7 +40,7 @@ func stopOnSignal(actors ...*actor.PID) {
 func setupServiceRemote(ctx context.Context, nodeIdx int) (*actor.PID, error) {
 	remote.Start()
 
-	conf, err := readConf()
+	conf, err := config.ReadConf(configFilePath)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +59,7 @@ func setupServiceRemote(ctx context.Context, nodeIdx int) (*actor.PID, error) {
 		return nil, err
 	}
 
-	if err := p2p.Bootstrap(p2pHost); err != nil {
+	if err := p2p.Bootstrap(p2pHost, conf); err != nil {
 		return nil, err
 	}
 

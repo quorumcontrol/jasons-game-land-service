@@ -1,25 +1,43 @@
 package p2p
 
 import (
+	"encoding/hex"
 	"fmt"
-	"os"
-	"strings"
 	"time"
 
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/quorumcontrol/jasons-game-land-service/config"
 	"github.com/quorumcontrol/tupelo-go-sdk/p2p"
 )
 
-func Bootstrap(p2pHost *p2p.LibP2PHost) error {
-	bootstrapperAddrsRaw := strings.Split(os.Getenv("LAND_SERVICE_BOOTSTRAPPERS"), ",")
+func BootstrapperAddrs(conf config.Configuration) ([]string, error) {
 	bootstrapperAddrs := []string{}
-	for _, addr := range bootstrapperAddrsRaw {
-		addr = strings.TrimSpace(addr)
-		if addr != "" {
-			bootstrapperAddrs = append(bootstrapperAddrs, addr)
+	// For now assume that bootstrappers run locally
+	for _, bc := range conf.Bootstrappers {
+		ecdsaKeyB, err := hex.DecodeString(bc.EcdsaHexPrivateKey)
+		if err != nil {
+			return nil, err
 		}
+		ecdsaKey, err := crypto.ToECDSA(ecdsaKeyB)
+		if err != nil {
+			return nil, err
+		}
+
+		peerId, err := p2p.PeerFromEcdsaKey(&ecdsaKey.PublicKey)
+		if err != nil {
+			return nil, err
+		}
+		addr := fmt.Sprintf("/ip4/127.0.0.1/tcp/34001/ipfs/%s", peerId)
+		bootstrapperAddrs = append(bootstrapperAddrs, addr)
 	}
-	if len(bootstrapperAddrs) == 0 {
-		return fmt.Errorf("please define $LAND_SERVICE_BOOTSTRAPPERS")
+
+	return bootstrapperAddrs, nil
+}
+
+func Bootstrap(p2pHost *p2p.LibP2PHost, conf config.Configuration) error {
+	bootstrapperAddrs, err := BootstrapperAddrs(conf)
+	if err != nil {
+		return err
 	}
 	if _, err := p2pHost.Bootstrap(bootstrapperAddrs); err != nil {
 		return err

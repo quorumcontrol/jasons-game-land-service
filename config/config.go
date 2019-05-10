@@ -1,4 +1,4 @@
-package cmd
+package config
 
 import (
 	"encoding/json"
@@ -9,34 +9,34 @@ import (
 	"runtime"
 )
 
-type configuration struct {
-	Bootstrappers []*bootstrapperConf `json:"bootstrappers"`
-	Services      []*serviceConf      `json:"services"`
+type Configuration struct {
+	Bootstrappers []*BootstrapperConf `json:"bootstrappers"`
+	Services      []*ServiceConf      `json:"services"`
 }
 
-type bootstrapperConf struct {
+type BootstrapperConf struct {
 	EcdsaHexPrivateKey string `json:"ecdsaHexPrivateKey,omitempty"`
 }
 
-type serviceConf struct {
+type ServiceConf struct {
 	EcdsaHexPrivateKey string `json:"ecdsaHexPrivateKey,omitempty"`
 	EcdsaHexPublicKey  string `json:"ecdsaHexPublicKey,omitempty"`
 }
 
-func readConf() (configuration, error) {
-	var conf configuration
+func ReadConf(fpath string) (Configuration, error) {
+	var conf Configuration
 
 	_, filename, _, ok := runtime.Caller(0)
 	if !ok {
 		return conf, fmt.Errorf("No caller information")
 	}
-	if !filepath.IsAbs(configFilePath) {
-		configFilePath = path.Join(path.Dir(filename), "..", configFilePath)
+	if !filepath.IsAbs(fpath) {
+		fpath = path.Join(path.Dir(filename), "..", fpath)
 	}
 
-	jsonBytes, err := ioutil.ReadFile(configFilePath)
+	jsonBytes, err := ioutil.ReadFile(fpath)
 	if err != nil {
-		return conf, fmt.Errorf("couldn't open %q, please ensure it exists", configFilePath)
+		return conf, fmt.Errorf("couldn't open %q, please ensure it exists", fpath)
 	}
 	if err := json.Unmarshal(jsonBytes, &conf); err != nil {
 		return conf, err

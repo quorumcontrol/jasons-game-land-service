@@ -6,7 +6,9 @@ import (
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/quorumcontrol/tupelo-go-sdk/p2p"
+	"github.com/quorumcontrol/jasons-game-land-service/config"
+	"github.com/quorumcontrol/jasons-game-land-service/p2p"
+	sdkp2p "github.com/quorumcontrol/tupelo-go-sdk/p2p"
 	"github.com/spf13/cobra"
 )
 
@@ -16,7 +18,7 @@ var cmdBootstrapper = &cobra.Command{
 	Use:   "bootstrapper",
 	Short: "Run a bootstrap node",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		conf, err := readConf()
+		conf, err := config.ReadConf(configFilePath)
 		if err != nil {
 			return err
 		}
@@ -33,19 +35,23 @@ var cmdBootstrapper = &cobra.Command{
 		}
 
 		ctx := context.Background()
-		host, err := p2p.NewRelayLibP2PHost(ctx, ecdsaKey, int(bootstrapperPort))
+		host, err := sdkp2p.NewRelayLibP2PHost(ctx, ecdsaKey, int(bootstrapperPort))
 		if err != nil {
 			return err
 		}
 
 		otherBootstrappers := []string{}
-		// for i, addr := range p2p.BootstrapNodes() {
-		// 	if i == nodeIdx {
-		// 		continue
-		// 	}
+		bootstrapperAddrs, err := p2p.BootstrapperAddrs(conf)
+		if err != nil {
+			return err
+		}
+		for i, addr := range bootstrapperAddrs {
+			if i == nodeIdx {
+				continue
+			}
 
-		// 	otherBootstrappers = append(otherBootstrappers, addr)
-		// }
+			otherBootstrappers = append(otherBootstrappers, addr)
+		}
 		if len(otherBootstrappers) > 0 {
 			if _, err = host.Bootstrap(otherBootstrappers); err != nil {
 				return err
