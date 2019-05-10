@@ -52,7 +52,6 @@ func setupServiceRemote(ctx context.Context, nodeIdx int) (*actor.PID, error) {
 	if err != nil {
 		return nil, err
 	}
-	peerId := crypto.PubkeyToAddress(ecdsaKey.PublicKey).String()
 
 	p2pHost, err := sdkp2p.NewLibP2PHost(ctx, ecdsaKey, int(servicePort))
 	if err != nil {
@@ -63,15 +62,8 @@ func setupServiceRemote(ctx context.Context, nodeIdx int) (*actor.PID, error) {
 		return nil, err
 	}
 
-	remote.NewRouter(p2pHost)
-
-	cfg := srv.ServiceConfig{
-		// Self:              localSigner,
-		// NotaryGroup:       group,
-		// CurrentStateStore: badgerCurrent,
-		// PubSubSystem:      remote.NewNetworkPubSub(p2pHost),
-	}
-	name := "service-" + peerId
+	cfg := srv.ServiceConfig{}
+	name := "service-" + crypto.PubkeyToAddress(ecdsaKey.PublicKey).String()
 	props := actor.PropsFromProducer(func() actor.Actor {
 		return srv.NewServiceActor(cfg)
 	})
@@ -79,6 +71,8 @@ func setupServiceRemote(ctx context.Context, nodeIdx int) (*actor.PID, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	remote.NewRouter(p2pHost)
 
 	return act, nil
 }

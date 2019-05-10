@@ -31,3 +31,21 @@ $ jasons-game-land-service client build-portal
 * Sending request to build portal...
 * Successfully sent request to build portal!
 ```
+
+## Internals
+### Bootstrapper
+Bootstrappers create a relay type libp2p host for other peers to bootstrap against.
+
+### Service
+Each service node creates a libp2p host that bootstraps itself against bootstrappers that it
+finds via its configuration. After bootstrapping, it spawns an actor to handle requests from peers
+and finally remote routing gets set up (using the Tupelo SDK). The remote routing subsystem routes
+messages to the actor as they arrive over the wire from other peers.
+
+### Client
+The client detects service nodes via its configuration, and creates a corresponding representation
+of a remote actor for each of them. After doing so it creates a libp2p host and bootstraps against
+the bootstrappers it can find via its configuration. Finally, it starts the Tupelo SDK
+remote routing subsystem and sends its request to the service, for example to build a portal.
+The request gets passed as a message to the actor representing the actor running remotely in 
+the service.
